@@ -349,6 +349,8 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         }
         keyboardView?.handleClipboard()
         keyboardView?.ensureToolbarVisible()
+        keyboardView?.requestLayout()
+        keyboardView?.invalidateAllKeys()
         binding.keyboardHolder.post {
             ViewCompat.requestApplyInsets(binding.keyboardHolder)
         }
@@ -905,6 +907,9 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             )
         ) {
             if (::binding.isInitialized) {
+                if (key == HEIGHT_PERCENTAGE || key == SHOW_NUMBERS_ROW || key == KEYBOARD_LANGUAGE) {
+                    reloadKeyboard()
+                }
                 keyboardView?.setupKeyboard()
                 updateBackgroundColors()
             }
@@ -916,7 +921,12 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
             WindowCompat.enableEdgeToEdge(this)
             ViewCompat.setOnApplyWindowInsetsListener(binding.keyboardHolder) { view, insets ->
                 val system = insets.getInsetsIgnoringVisibility(Type.systemBars())
-                binding.keyboardHolder.updatePadding(bottom = system.bottom)
+                val oldPadding = binding.keyboardHolder.paddingBottom
+                if (oldPadding != system.bottom) {
+                    binding.keyboardHolder.updatePadding(bottom = system.bottom)
+                    keyboardView?.requestLayout()
+                    keyboardView?.invalidateAllKeys()
+                }
                 insets
             }
         }

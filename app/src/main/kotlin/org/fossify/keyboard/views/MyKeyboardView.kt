@@ -840,10 +840,23 @@ class MyKeyboardView @JvmOverloads constructor(
         } else {
             var width = mKeyboard!!.mMinWidth
             val specSize = MeasureSpec.getSize(widthMeasureSpec)
-            if (specSize > 0 && specSize < width + 10) {
+            if (specSize > 0) {
                 width = specSize
             }
             setMeasuredDimension(width, mKeyboard!!.mHeight)
+        }
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (w > 0 && h > 0 && (w != oldw || h != oldh)) {
+            mBuffer?.recycle()
+            mBuffer = null
+            mCanvas = null
+            mKeyboardChanged = true
+            mDirtyRect.set(0, 0, w, h)
+            mDrawPending = true
+            invalidate()
         }
     }
 
@@ -875,28 +888,42 @@ class MyKeyboardView @JvmOverloads constructor(
 
     public override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        if (mDrawPending || mBuffer == null || mKeyboardChanged) {
+        val bufferNeedsUpdate = mBuffer == null || mBuffer!!.width != width || mBuffer!!.height != height
+        if (mDrawPending || bufferNeedsUpdate || mKeyboardChanged) {
             onBufferDraw()
         }
-        canvas.drawBitmap(mBuffer!!, 0f, 0f, null)
+        mBuffer?.let {
+            canvas.drawBitmap(it, 0f, 0f, null)
+        }
     }
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun onBufferDraw() {
-        if (mBuffer == null || mKeyboardChanged) {
-            if (mBuffer == null || mKeyboardChanged && (mBuffer!!.width != width || mBuffer!!.height != height)) {
-                // Make sure our bitmap is at least 1x1
-                val width = Math.max(1, width)
-                val height = Math.max(1, height)
-                mBuffer = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                mCanvas = Canvas(mBuffer!!)
-            }
-            invalidateAllKeys()
+        if (width <= 0 || height <= 0) {
+            return
+        }
+
+        if (mBuffer == null || mBuffer!!.width != width || mBuffer!!.height != height) {
+            val w = Math.max(1, width)
+            val h = Math.max(1, height)
+            mBuffer?.recycle()
+            mBuffer = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            mCanvas = Canvas(mBuffer!!)
             mKeyboardChanged = false
+            mDirtyRect.set(0, 0, width, height)
+            mDrawPending = true
+        } else if (mKeyboardChanged) {
+            mKeyboardChanged = false
+            mDirtyRect.set(0, 0, width, height)
+            mDrawPending = true
         }
 
         if (mKeyboard == null) {
             return
+        }
+
+        if (mDirtyRect.isEmpty) {
+            mDirtyRect.set(0, 0, width, height)
         }
 
         mCanvas!!.save()
@@ -1366,7 +1393,11 @@ class MyKeyboardView @JvmOverloads constructor(
      * an invalidate() only draws the cached buffer.
      */
     fun invalidateAllKeys() {
-        mDirtyRect.union(0, 0, width, height)
+        if (width > 0 && height > 0) {
+            mDirtyRect.set(0, 0, width, height)
+        } else if (mKeyboard != null) {
+            mDirtyRect.set(0, 0, mKeyboard!!.mMinWidth, mKeyboard!!.mHeight)
+        }
         mDrawPending = true
         invalidate()
     }
