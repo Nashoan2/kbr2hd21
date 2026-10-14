@@ -1,0 +1,7 @@
+-keep class org.fossify.keyboard.helpers.MyKeyboard$Key { *; }
+-keep class org.fossify.keyboard.views.** { *; }
+-keep class org.fossify.keyboard.models.** { *; }
+-keep class org.fossify.keyboard.adapters.** { *; }
+-keep class org.fossify.keyboard.databinding.** { *; }
+-keep class org.fossify.commons.** { *; }
+-dontwarn **
