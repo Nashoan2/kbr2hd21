@@ -86,4 +86,8 @@
     <string name="unpin_text">إلغاء التثبيت</string>
     <string name="text_unpinned">تم إلغاء التثبيت</string>
     <string name="enable_voice_typing_settings">يرجى تفعيل الكتابة بالصوت من Google في إعدادات لوحة المفاتيح</string>
+    <string name="up">أعلى</string>
+    <string name="down">أسفل</string>
+    <string name="left">يسار</string>
+    <string name="right">يمين</string>
 </resources>

@@ -357,6 +357,9 @@ class MyKeyboardView @JvmOverloads constructor(
         closeClipboardManager()
         removeMessages()
         mKeyboard = keyboard
+        if (width > 0 && mKeyboard != null && mKeyboard!!.mDisplayWidth != width) {
+            mKeyboard!!.scaleToWidth(width)
+        }
         val keys = mKeyboard!!.mKeys
         mKeys = keys!!.toMutableList() as ArrayList<MyKeyboard.Key>
         requestLayout()
@@ -850,6 +853,8 @@ class MyKeyboardView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         if (w > 0 && h > 0 && (w != oldw || h != oldh)) {
+            mKeyboard?.scaleToWidth(w)
+            mKeyboard?.let { computeProximityThreshold(it) }
             mBuffer?.recycle()
             mBuffer = null
             mCanvas = null

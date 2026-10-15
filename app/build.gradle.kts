@@ -73,7 +73,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("debugConfig")
-            isDebuggable = false
+            isDebuggable = true
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

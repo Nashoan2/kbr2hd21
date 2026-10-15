@@ -123,6 +123,7 @@ class SettingsActivity : SimpleActivity() {
         binding.settingsSoundOnKeypressHolder.visibility = android.view.View.GONE
     }
 
+    @Suppress("unused")
     private fun getSoundOnKeypressText(mode: Int): String = getString(
         when (mode) {
             SOUND_SYSTEM -> R.string.sound_system

@@ -46,7 +46,7 @@ class MyKeyboard {
     var mKeys: MutableList<Key>? = null
 
     /** Width of the screen available to fit the keyboard  */
-    private var mDisplayWidth = 0
+    var mDisplayWidth = 0
 
     /** What icon should we show at Enter key  */
     private var mEnterKeyType = IME_ACTION_NONE
@@ -280,8 +280,8 @@ class MyKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param enterKeyType determines what icon should we show on Enter key
      */
-    constructor(context: Context, @XmlRes xmlLayoutResId: Int, enterKeyType: Int) {
-        mDisplayWidth = context.resources.displayMetrics.widthPixels
+    constructor(context: Context, @XmlRes xmlLayoutResId: Int, enterKeyType: Int, displayWidth: Int = context.resources.displayMetrics.widthPixels) {
+        mDisplayWidth = displayWidth
         mDefaultHorizontalGap = 0
         mDefaultWidth = mDisplayWidth / 10
         mDefaultHeight = mDefaultWidth
@@ -420,6 +420,33 @@ class MyKeyboard {
                         }
                     } else if (inRow) {
                         inRow = false
+                        currentRow?.let { r ->
+                            if (r.mKeys.isNotEmpty()) {
+                                val lastKey = r.mKeys.last()
+                                val totalRowWidth = lastKey.x + lastKey.width
+                                if (totalRowWidth > mDisplayWidth) {
+                                    val overflow = totalRowWidth - mDisplayWidth
+                                    if (overflow <= r.mKeys.size * 2) {
+                                        lastKey.width = Math.max(1, lastKey.width - overflow)
+                                    } else {
+                                        val factor = mDisplayWidth.toFloat() / totalRowWidth
+                                        var curX = 0
+                                        for (k in r.mKeys) {
+                                            k.x = curX
+                                            k.width = Math.round(k.width * factor)
+                                            curX += k.width + k.gap
+                                        }
+                                        if (r.mKeys.isNotEmpty()) {
+                                            val endKey = r.mKeys.last()
+                                            val endX = endKey.x + endKey.width
+                                            if (endX != mDisplayWidth) {
+                                                endKey.width = Math.max(1, endKey.width + (mDisplayWidth - endX))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         y += currentRow!!.defaultHeight
                         row++
                     }
@@ -428,6 +455,27 @@ class MyKeyboard {
         } catch (e: Exception) {
         }
         mHeight = y
+    }
+
+    fun scaleToWidth(newWidth: Int) {
+        if (newWidth <= 0 || newWidth == mDisplayWidth || mDisplayWidth <= 0) return
+        val factor = newWidth.toFloat() / mDisplayWidth
+        for (r in mRows) {
+            if (r == null || r.mKeys.isEmpty()) continue
+            var curX = 0
+            for (key in r.mKeys) {
+                key.x = curX
+                key.width = Math.round(key.width * factor)
+                curX += key.width + key.gap
+            }
+            val lastKey = r.mKeys.last()
+            val rowEnd = lastKey.x + lastKey.width
+            if (rowEnd != newWidth) {
+                lastKey.width = Math.max(1, lastKey.width + (newWidth - rowEnd))
+            }
+        }
+        mDisplayWidth = newWidth
+        mMinWidth = newWidth
     }
 
     private fun parseKeyboardAttributes(res: Resources, parser: XmlResourceParser) {

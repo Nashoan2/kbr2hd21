@@ -949,7 +949,8 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     }
 
     private fun constructKeyboard(keyboardXml: Int, enterKeyType: Int): MyKeyboard {
-        val keyboard = MyKeyboard(this, keyboardXml, enterKeyType)
+        val displayWidth = keyboardView?.width?.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        val keyboard = MyKeyboard(this, keyboardXml, enterKeyType, displayWidth)
         return adjustBottomRow(keyboard)
     }
 
