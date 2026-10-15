@@ -55,7 +55,7 @@ class Config(context: Context) : BaseConfig(context) {
         set(keyboardLanguage) = prefs.edit().putInt(KEYBOARD_LANGUAGE, keyboardLanguage).apply()
 
     var keyboardHeightPercentage: Int
-        get() = prefs.getInt(HEIGHT_PERCENTAGE, 100)
+        get() = prefs.getInt(HEIGHT_PERCENTAGE, KEYBOARD_HEIGHT_140_PERCENT)
         set(keyboardHeightMultiplier) = prefs.edit().putInt(HEIGHT_PERCENTAGE, keyboardHeightMultiplier).apply()
 
     var showClipboardContent: Boolean
