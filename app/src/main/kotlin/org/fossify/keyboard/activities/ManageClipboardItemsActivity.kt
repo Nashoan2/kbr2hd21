@@ -307,9 +307,10 @@ class ManageClipboardItemsActivity : SimpleActivity(), RefreshRecyclerViewListen
         var clipsImported = 0
         ensureBackgroundThread {
             try {
-                val reader = inputStream.bufferedReader()
-                val jsonElement = JsonParser.parseReader(reader)
                 val items = ArrayList<BackupItem>()
+                val jsonElement = inputStream.bufferedReader().use { reader ->
+                    JsonParser.parseReader(reader)
+                }
 
                 if (jsonElement.isJsonObject) {
                     val root = jsonElement.asJsonObject

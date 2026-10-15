@@ -1,6 +1,6 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="36dp"
-    android:height="26dp"
+    android:width="45dp"
+    android:height="34dp"
     android:viewportWidth="36"
     android:viewportHeight="26">
     <!-- Backspace tag filled with bright neon cyan -->

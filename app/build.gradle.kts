@@ -73,7 +73,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("debugConfig")
-            isDebuggable = true
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -93,6 +93,22 @@ android {
             } else {
                 signingConfig = signingConfigs.getByName("debugConfig")
             }
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/*.version",
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/*.txt",
+                "META-INF/*.md",
+                "META-INF/DEPENDENCIES",
+                "org/joda/time/tz/data/**",
+                "ezvcard/**",
+                "freemarker/**"
+            )
         }
     }
 

@@ -54,8 +54,12 @@ class Config(context: Context) : BaseConfig(context) {
         }
         set(keyboardLanguage) = prefs.edit().putInt(KEYBOARD_LANGUAGE, keyboardLanguage).apply()
 
+    var keyboardTheme: Int
+        get() = prefs.getInt(KEYBOARD_THEME, THEME_NEON_CYBER)
+        set(keyboardTheme) = prefs.edit().putInt(KEYBOARD_THEME, keyboardTheme).apply()
+
     var keyboardHeightPercentage: Int
-        get() = prefs.getInt(HEIGHT_PERCENTAGE, KEYBOARD_HEIGHT_140_PERCENT)
+        get() = prefs.getInt(HEIGHT_PERCENTAGE, KEYBOARD_HEIGHT_100_PERCENT)
         set(keyboardHeightMultiplier) = prefs.edit().putInt(HEIGHT_PERCENTAGE, keyboardHeightMultiplier).apply()
 
     var showClipboardContent: Boolean

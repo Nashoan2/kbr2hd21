@@ -89,10 +89,13 @@ class ClipsActivityAdapter(
     override fun onActionModeDestroyed() {
         if (wasClipMoved) {
             ensureBackgroundThread {
-                activity.clipsDB.deleteAll()
                 items.forEach { clip ->
-                    clip.id = null
-                    clip.id = ClipsHelper(activity).insertClip(clip)
+                    activity.clipsDB.deleteClipWithValue(clip.value.trim())
+                }
+                for (i in items.indices.reversed()) {
+                    val clip = items[i]
+                    val newId = activity.clipsDB.insertOrUpdate(Clip(null, clip.value.trim(), clip.isPinned))
+                    clip.id = newId
                 }
 
                 activity.runOnUiThread {

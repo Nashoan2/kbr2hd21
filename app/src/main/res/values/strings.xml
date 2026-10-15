@@ -43,6 +43,12 @@
     <string name="sound_always">Always on</string>
     <string name="keyboard_language">Keyboard language</string>
     <string name="keyboard_height">Keyboard height</string>
+    <string name="keyboard_theme">Keyboard theme</string>
+    <string name="theme_cyber_neon">Cyber Neon 3D (Default)</string>
+    <string name="theme_honey_3d">Honey Amber 3D</string>
+    <string name="theme_retro_1995">Classic 1995 Retro 3D</string>
+    <string name="theme_ios_dark">iOS Midnight Glass 3D</string>
+    <string name="theme_piano_3d">Luxury Piano Keys 3D</string>
     <string name="show_key_borders">Show key borders</string>
     <string name="show_numbers_row">Show numbers on a separate row</string>
     <string name="start_sentences_capitalized">Start sentences with a capital letter</string>

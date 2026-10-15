@@ -18,6 +18,8 @@ import org.fossify.keyboard.extensions.config
 import org.fossify.keyboard.extensions.getCurrentVoiceInputMethod
 import org.fossify.keyboard.extensions.getKeyboardLanguageText
 import org.fossify.keyboard.extensions.getKeyboardLanguagesRadioItems
+import org.fossify.keyboard.extensions.getKeyboardThemeName
+import org.fossify.keyboard.extensions.getKeyboardThemesRadioItems
 import org.fossify.keyboard.extensions.getVoiceInputMethods
 import org.fossify.keyboard.extensions.getVoiceInputRadioItems
 import org.fossify.keyboard.helpers.KEYBOARD_HEIGHT_100_PERCENT
@@ -59,6 +61,7 @@ class SettingsActivity : SimpleActivity() {
         setupShowKeyBorders()
         setupManageKeyboardLanguages()
         setupKeyboardLanguage()
+        setupKeyboardTheme()
         setupKeyboardHeightMultiplier()
         setupShowEmojiKey()
         setupShowLanguageSwitchKey()
@@ -170,6 +173,19 @@ class SettingsActivity : SimpleActivity() {
                 RadioGroupDialog(this@SettingsActivity, items, config.keyboardLanguage) {
                     config.keyboardLanguage = it as Int
                     settingsKeyboardLanguage.text = getKeyboardLanguageText(config.keyboardLanguage)
+                }
+            }
+        }
+    }
+
+    private fun setupKeyboardTheme() {
+        binding.apply {
+            settingsKeyboardTheme.text = getKeyboardThemeName(config.keyboardTheme)
+            settingsKeyboardThemeHolder.setOnClickListener {
+                val items = getKeyboardThemesRadioItems()
+                RadioGroupDialog(this@SettingsActivity, items, config.keyboardTheme) {
+                    config.keyboardTheme = it as Int
+                    settingsKeyboardTheme.text = getKeyboardThemeName(config.keyboardTheme)
                 }
             }
         }

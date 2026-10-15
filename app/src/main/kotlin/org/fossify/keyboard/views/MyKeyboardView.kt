@@ -11,15 +11,24 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Paint.Align
 import android.graphics.PorterDuff
 import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.RippleDrawable
+import org.fossify.keyboard.extensions.getCurrentKeyboardTheme
+import org.fossify.keyboard.helpers.THEME_HONEY_3D
+import org.fossify.keyboard.helpers.THEME_IOS_DARK
+import org.fossify.keyboard.helpers.THEME_NEON_CYBER
+import org.fossify.keyboard.helpers.THEME_PIANO_3D
+import org.fossify.keyboard.helpers.THEME_RETRO_1995
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -213,6 +222,13 @@ class MyKeyboardView @JvmOverloads constructor(
     private var mShowKeyBorders: Boolean = false
     private var mUsingSystemTheme: Boolean = true
     private var mVoiceInputMethod: String = ""
+
+    private val mKey3DPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val mKeyShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val mKeyHighlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
+    private val mKeyRectF = RectF()
 
     private var mToolbarHolder: View? = null
     private var mClipboardManagerHolder: View? = null
@@ -1057,9 +1073,16 @@ class MyKeyboardView @JvmOverloads constructor(
                 val keyIcon = key.icon!!
                 val secondaryIcon = key.secondaryIcon
                 if (secondaryIcon != null) {
-                    // When secondary icon exists, shrink main icon to 90%
-                    val keyIconWidth = (keyIcon.intrinsicWidth * 0.9f).toInt()
-                    val keyIconHeight = (keyIcon.intrinsicHeight * 0.9f).toInt()
+                    val keyIconWidth: Int
+                    val keyIconHeight: Int
+                    if (code == KEYCODE_DELETE) {
+                        keyIconWidth = (key.height * 0.58f).toInt()
+                        keyIconHeight = (key.height * 0.44f).toInt()
+                    } else {
+                        // When secondary icon exists, shrink main icon to 90%
+                        keyIconWidth = (keyIcon.intrinsicWidth * 0.9f).toInt()
+                        keyIconHeight = (keyIcon.intrinsicHeight * 0.9f).toInt()
+                    }
 
                     val centerX = key.width / 2
                     val centerY = key.height / 2
@@ -1077,10 +1100,21 @@ class MyKeyboardView @JvmOverloads constructor(
 
                     drawSecondaryIcon(key, canvas, textColor)
                 } else {
-                    val drawableX = (key.width - keyIcon.intrinsicWidth) / 2
-                    val drawableY = (key.height - keyIcon.intrinsicHeight) / 2
+                    val iconWidth = if (code == KEYCODE_DELETE) {
+                        (key.height * 0.58f).toInt()
+                    } else {
+                        keyIcon.intrinsicWidth
+                    }
+                    val iconHeight = if (code == KEYCODE_DELETE) {
+                        (key.height * 0.44f).toInt()
+                    } else {
+                        keyIcon.intrinsicHeight
+                    }
+
+                    val drawableX = (key.width - iconWidth) / 2
+                    val drawableY = (key.height - iconHeight) / 2
                     canvas.translate(drawableX.toFloat(), drawableY.toFloat())
-                    keyIcon.setBounds(0, 0, keyIcon.intrinsicWidth, keyIcon.intrinsicHeight)
+                    keyIcon.setBounds(0, 0, iconWidth, iconHeight)
                     keyIcon.draw(canvas)
                     canvas.translate(-drawableX.toFloat(), -drawableY.toFloat())
                 }

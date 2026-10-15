@@ -23,6 +23,12 @@
     <string name="vibrate_on_keypress">يهتز عند ضغط الزر</string>
     <string name="keyboard_language">لغة لوحة المفاتيح</string>
     <string name="keyboard_height">ارتفاع لوحة المفاتيح</string>
+    <string name="keyboard_theme">شكل ومظهر لوحة المفاتيح</string>
+    <string name="theme_cyber_neon">السيبراني النيون 3D (الشكل الحالي)</string>
+    <string name="theme_honey_3d">العسلية الذهبية 3D</string>
+    <string name="theme_retro_1995">الكلاسيكية 1995 3D</string>
+    <string name="theme_ios_dark">الآيفون الداكنة 3D</string>
+    <string name="theme_piano_3d">مفاتيح البيانو 3D</string>
     <string name="show_key_borders">إظهار حدود المفاتيح</string>
     <string name="show_numbers_row">إظهار الأرقام في صف منفصل</string>
     <string name="start_sentences_capitalized">بدء الجمل بحرف كبير</string>
