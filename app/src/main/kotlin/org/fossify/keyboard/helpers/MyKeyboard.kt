@@ -421,31 +421,7 @@ class MyKeyboard {
                     } else if (inRow) {
                         inRow = false
                         currentRow?.let { r ->
-                            if (r.mKeys.isNotEmpty()) {
-                                val lastKey = r.mKeys.last()
-                                val totalRowWidth = lastKey.x + lastKey.width
-                                if (totalRowWidth > mDisplayWidth) {
-                                    val overflow = totalRowWidth - mDisplayWidth
-                                    if (overflow <= r.mKeys.size * 2) {
-                                        lastKey.width = Math.max(1, lastKey.width - overflow)
-                                    } else {
-                                        val factor = mDisplayWidth.toFloat() / totalRowWidth
-                                        var curX = 0
-                                        for (k in r.mKeys) {
-                                            k.x = curX
-                                            k.width = Math.round(k.width * factor)
-                                            curX += k.width + k.gap
-                                        }
-                                        if (r.mKeys.isNotEmpty()) {
-                                            val endKey = r.mKeys.last()
-                                            val endX = endKey.x + endKey.width
-                                            if (endX != mDisplayWidth) {
-                                                endKey.width = Math.max(1, endKey.width + (mDisplayWidth - endX))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            adjustRowKeys(r, mDisplayWidth)
                         }
                         y += currentRow!!.defaultHeight
                         row++
@@ -457,6 +433,57 @@ class MyKeyboard {
         mHeight = y
     }
 
+    private fun adjustRowKeys(r: Row, targetWidth: Int) {
+        if (r.mKeys.isEmpty() || targetWidth <= 0) return
+        val firstKey = r.mKeys.first()
+        val lastKey = r.mKeys.last()
+        val totalRowWidth = lastKey.x + lastKey.width
+        val isFullWidth = (totalRowWidth >= targetWidth * 0.94f && firstKey.gap == 0) || (totalRowWidth >= targetWidth * 0.98f)
+
+        if (isFullWidth) {
+            var diff = targetWidth - totalRowWidth
+            if (diff != 0) {
+                val step = if (diff > 0) 1 else -1
+                var idx = r.mKeys.size - 1
+                while (diff != 0 && r.mKeys.isNotEmpty()) {
+                    val key = r.mKeys[idx]
+                    if (step > 0 || key.width > 1) {
+                        key.width += step
+                        diff -= step
+                    }
+                    idx--
+                    if (idx < 0) idx = r.mKeys.size - 1
+                }
+            }
+            var curX = 0
+            for (k in r.mKeys) {
+                curX += k.gap
+                k.x = curX
+                curX += k.width
+            }
+        } else {
+            if (totalRowWidth > targetWidth) {
+                var diff = totalRowWidth - targetWidth
+                var idx = r.mKeys.size - 1
+                while (diff > 0 && r.mKeys.isNotEmpty()) {
+                    val key = r.mKeys[idx]
+                    if (key.width > 1) {
+                        key.width -= 1
+                        diff -= 1
+                    }
+                    idx--
+                    if (idx < 0) idx = r.mKeys.size - 1
+                }
+            }
+            var curX = 0
+            for (k in r.mKeys) {
+                curX += k.gap
+                k.x = curX
+                curX += k.width
+            }
+        }
+    }
+
     fun scaleToWidth(newWidth: Int) {
         if (newWidth <= 0 || newWidth == mDisplayWidth || mDisplayWidth <= 0) return
         val factor = newWidth.toFloat() / mDisplayWidth
@@ -464,15 +491,13 @@ class MyKeyboard {
             if (r == null || r.mKeys.isEmpty()) continue
             var curX = 0
             for (key in r.mKeys) {
+                key.gap = Math.round(key.gap * factor)
+                key.width = Math.max(1, Math.round(key.width * factor))
+                curX += key.gap
                 key.x = curX
-                key.width = Math.round(key.width * factor)
-                curX += key.width + key.gap
+                curX += key.width
             }
-            val lastKey = r.mKeys.last()
-            val rowEnd = lastKey.x + lastKey.width
-            if (rowEnd != newWidth) {
-                lastKey.width = Math.max(1, lastKey.width + (newWidth - rowEnd))
-            }
+            adjustRowKeys(r, newWidth)
         }
         mDisplayWidth = newWidth
         mMinWidth = newWidth

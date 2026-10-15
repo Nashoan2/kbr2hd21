@@ -854,6 +854,9 @@ class MyKeyboardView @JvmOverloads constructor(
         super.onSizeChanged(w, h, oldw, oldh)
         if (w > 0 && h > 0 && (w != oldw || h != oldh)) {
             mKeyboard?.scaleToWidth(w)
+            mKeyboard?.mKeys?.let {
+                mKeys = it.toMutableList() as ArrayList<MyKeyboard.Key>
+            }
             mKeyboard?.let { computeProximityThreshold(it) }
             mBuffer?.recycle()
             mBuffer = null
@@ -1007,7 +1010,7 @@ class MyKeyboardView @JvmOverloads constructor(
                     canvas.drawText(
                         key.topSmallNumber,
                         key.width - bounds.width() / 2f - mTopSmallNumberMarginWidth,
-                        key.y + mTopSmallNumberSize + mTopSmallNumberMarginHeight,
+                        mTopSmallNumberSize + mTopSmallNumberMarginHeight,
                         smallLetterPaint
                     )
                 }

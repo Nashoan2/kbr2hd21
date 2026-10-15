@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.ClipboardManager
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
@@ -351,8 +352,27 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
         keyboardView?.ensureToolbarVisible()
         keyboardView?.requestLayout()
         keyboardView?.invalidateAllKeys()
-        binding.keyboardHolder.post {
-            ViewCompat.requestApplyInsets(binding.keyboardHolder)
+    }
+
+    override fun onComputeInsets(outInsets: Insets) {
+        super.onComputeInsets(outInsets)
+        if (::binding.isInitialized && binding.keyboardHolder.isShown) {
+            val location = IntArray(2)
+            binding.keyboardHolder.getLocationInWindow(location)
+            if (location[1] > 0) {
+                outInsets.contentTopInsets = location[1]
+                outInsets.visibleTopInsets = location[1]
+                outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_CONTENT
+            }
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        if (::binding.isInitialized) {
+            reloadKeyboard()
+            keyboardView?.requestLayout()
+            keyboardView?.invalidateAllKeys()
         }
     }
 
@@ -917,18 +937,15 @@ class SimpleKeyboardIME : InputMethodService(), OnKeyboardActionListener, Shared
     }
 
     private fun setupEdgeToEdge() {
-        window.window?.apply {
-            WindowCompat.enableEdgeToEdge(this)
-            ViewCompat.setOnApplyWindowInsetsListener(binding.keyboardHolder) { view, insets ->
-                val system = insets.getInsetsIgnoringVisibility(Type.systemBars())
-                val oldPadding = binding.keyboardHolder.paddingBottom
-                if (oldPadding != system.bottom) {
-                    binding.keyboardHolder.updatePadding(bottom = system.bottom)
-                    keyboardView?.requestLayout()
-                    keyboardView?.invalidateAllKeys()
-                }
-                insets
+        ViewCompat.setOnApplyWindowInsetsListener(binding.keyboardHolder) { _, insets ->
+            val navBars = insets.getInsets(Type.navigationBars())
+            val targetBottom = navBars.bottom
+            if (binding.keyboardHolder.paddingBottom != targetBottom) {
+                binding.keyboardHolder.updatePadding(bottom = targetBottom)
+                keyboardView?.requestLayout()
+                keyboardView?.invalidateAllKeys()
             }
+            insets
         }
     }
 
