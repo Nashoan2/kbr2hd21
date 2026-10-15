@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import org.fossify.commons.dialogs.FilePickerDialog
 import org.fossify.commons.extensions.*
@@ -174,11 +176,13 @@ class ManageClipboardItemsActivity : SimpleActivity(), RefreshRecyclerViewListen
         }
     }
 
+    data class BackupItem(val value: String, val isPinned: Boolean, val order: Int)
+
     private fun exportClips() {
         if (isQPlus()) {
             ExportClipsDialog(this, config.lastExportedClipsFolder, true) { path, filename ->
                 Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                    type = "text/plain"
+                    type = "application/json"
                     putExtra(Intent.EXTRA_TITLE, filename)
                     addCategory(Intent.CATEGORY_OPENABLE)
 
@@ -212,14 +216,44 @@ class ManageClipboardItemsActivity : SimpleActivity(), RefreshRecyclerViewListen
         }
 
         ensureBackgroundThread {
-            val clips = clipsDB.getClips().map { it.value }
-            if (clips.isEmpty()) {
+            val pinnedClips = clipsDB.getPinnedClips()
+            val recentClips = clipsDB.getRecentClips()
+
+            if (pinnedClips.isEmpty() && recentClips.isEmpty()) {
                 toast(R.string.no_entries_for_exporting)
                 return@ensureBackgroundThread
             }
 
+            val clipsList = ArrayList<Map<String, Any>>()
 
-            val json = Gson().toJson(clips)
+            pinnedClips.forEachIndexed { index, clip ->
+                clipsList.add(
+                    mapOf(
+                        "value" to clip.value,
+                        "isPinned" to true,
+                        "order" to index
+                    )
+                )
+            }
+
+            recentClips.forEachIndexed { index, clip ->
+                clipsList.add(
+                    mapOf(
+                        "value" to clip.value,
+                        "isPinned" to false,
+                        "order" to index
+                    )
+                )
+            }
+
+            val backupMap = mapOf(
+                "version" to 2,
+                "exportedAt" to System.currentTimeMillis(),
+                "totalCount" to clipsList.size,
+                "clips" to clipsList
+            )
+
+            val json = GsonBuilder().setPrettyPrinting().create().toJson(backupMap)
             outputStream.bufferedWriter().use { out ->
                 out.write(json)
             }
@@ -232,7 +266,16 @@ class ManageClipboardItemsActivity : SimpleActivity(), RefreshRecyclerViewListen
         if (isQPlus()) {
             Intent(Intent.ACTION_GET_CONTENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
-                type = "text/plain"
+                type = "*/*"
+                putExtra(
+                    Intent.EXTRA_MIME_TYPES,
+                    arrayOf(
+                        "application/json",
+                        "text/json",
+                        "text/plain",
+                        "application/octet-stream"
+                    )
+                )
 
                 try {
                     startActivityForResult(this, PICK_IMPORT_CLIPS_SOURCE_INTENT)
@@ -264,14 +307,88 @@ class ManageClipboardItemsActivity : SimpleActivity(), RefreshRecyclerViewListen
         var clipsImported = 0
         ensureBackgroundThread {
             try {
-                val token = object : TypeToken<List<String>>() {}.type
-                val clipValues = Gson().fromJson<ArrayList<String>>(inputStream.bufferedReader(), token) ?: ArrayList()
-                clipValues.forEach { value ->
-                    val clip = Clip(null, value)
-                    if (ClipsHelper(this).insertClip(clip) > 0) {
+                val reader = inputStream.bufferedReader()
+                val jsonElement = JsonParser.parseReader(reader)
+                val items = ArrayList<BackupItem>()
+
+                if (jsonElement.isJsonObject) {
+                    val root = jsonElement.asJsonObject
+                    if (root.has("clips") && root.get("clips").isJsonArray) {
+                        val clipsArray = root.getAsJsonArray("clips")
+                        for (elem in clipsArray) {
+                            if (elem.isJsonObject) {
+                                val o = elem.asJsonObject
+                                val v = o.get("value")?.asString?.trim() ?: ""
+                                val isPinned = o.get("isPinned")?.asBoolean ?: false
+                                val order = o.get("order")?.asInt ?: items.size
+                                if (v.isNotEmpty()) {
+                                    items.add(BackupItem(v, isPinned, order))
+                                }
+                            } else if (elem.isJsonPrimitive) {
+                                val v = elem.asString.trim()
+                                if (v.isNotEmpty()) {
+                                    items.add(BackupItem(v, false, items.size))
+                                }
+                            }
+                        }
+                    }
+                } else if (jsonElement.isJsonArray) {
+                    val array = jsonElement.asJsonArray
+                    for (elem in array) {
+                        if (elem.isJsonObject) {
+                            val o = elem.asJsonObject
+                            val v = o.get("value")?.asString?.trim() ?: ""
+                            val isPinned = o.get("isPinned")?.asBoolean ?: false
+                            val order = o.get("order")?.asInt ?: items.size
+                            if (v.isNotEmpty()) {
+                                items.add(BackupItem(v, isPinned, order))
+                            }
+                        } else if (elem.isJsonPrimitive) {
+                            val v = elem.asString.trim()
+                            if (v.isNotEmpty()) {
+                                items.add(BackupItem(v, false, items.size))
+                            }
+                        }
+                    }
+                }
+
+                if (items.isEmpty()) {
+                    runOnUiThread {
+                        toast(R.string.no_new_entries_for_importing)
+                    }
+                    return@ensureBackgroundThread
+                }
+
+                val pinnedItems = items.filter { it.isPinned }.sortedBy { it.order }
+                val recentItems = items.filter { !it.isPinned }.sortedBy { it.order }
+
+                // The database queries clips with `ORDER BY id DESC`.
+                // To preserve the exact visual order where order=0 is at the top,
+                // item 0 must receive a higher ID than item 1, which must be higher than item 2, etc.
+                // Therefore, we insert them in REVERSE order (from bottom to top),
+                // so that the top-most item (index 0) is inserted last and gets the highest auto-increment ID!
+
+                for (i in pinnedItems.indices.reversed()) {
+                    val item = pinnedItems[i]
+                    clipsDB.deleteClipWithValue(item.value)
+                    val clip = Clip(id = null, value = item.value, isPinned = true)
+                    val newId = clipsDB.insertOrUpdate(clip)
+                    if (newId > 0) {
                         clipsImported++
                     }
                 }
+
+                for (i in recentItems.indices.reversed()) {
+                    val item = recentItems[i]
+                    clipsDB.deleteClipWithValue(item.value)
+                    val clip = Clip(id = null, value = item.value, isPinned = false)
+                    val newId = clipsDB.insertOrUpdate(clip)
+                    if (newId > 0) {
+                        clipsImported++
+                    }
+                }
+
+                clipsDB.trimRecentClips()
 
                 runOnUiThread {
                     val msg = if (clipsImported > 0) R.string.importing_successful else R.string.no_new_entries_for_importing

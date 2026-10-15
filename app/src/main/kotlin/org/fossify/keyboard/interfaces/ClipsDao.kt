@@ -29,6 +29,9 @@ interface ClipsDao {
     @Query("DELETE FROM clips WHERE value = :value AND is_pinned = 0")
     fun deleteRecentClipWithValue(value: String)
 
+    @Query("DELETE FROM clips WHERE value = :value")
+    fun deleteClipWithValue(value: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOrUpdate(clip: Clip): Long
 

@@ -32,6 +32,7 @@
     <string name="clipboard_recent">الأحدث</string>
     <string name="export_clipboard_items">نسخة احتياطية للنصوص المحفوظة (تصدير)</string>
     <string name="import_clipboard_items">استعادة النصوص المحفوظة (استيراد)</string>
+    <string name="filename_backup_hint">اسم ملف النسخة الاحتياطية (.json)</string>
     <string name="backup_and_restore">النسخ الاحتياطي والاستعادة</string>
     <string name="backup_clipboard_items">نسخة احتياطية للنصوص المحفوظة</string>
     <string name="backup_clipboard_items_summary">تصدير وحفظ جميع النصوص في ملف خارجي</string>

@@ -19,8 +19,9 @@ class ExportClipsDialog(
             activity.internalStoragePath
         }
 
+        val defaultName = "${activity.getString(R.string.app_launcher_name)}_backup_${activity.getCurrentFormattedDateTime()}.json"
         val binding = DialogExportClipsBinding.inflate(activity.layoutInflater).apply {
-            exportClipsFilename.setText("${activity.getString(R.string.app_launcher_name)}_${activity.getCurrentFormattedDateTime()}")
+            exportClipsFilename.setText(defaultName)
 
             if (hidePath) {
                 exportClipsPathLabel.beGone()
@@ -43,10 +44,14 @@ class ExportClipsDialog(
                 activity.setupDialogStuff(binding.root, this, R.string.export_clipboard_items) { alertDialog ->
                     alertDialog.showKeyboard(binding.exportClipsFilename)
                     alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                        val filename = binding.exportClipsFilename.value
+                        var filename = binding.exportClipsFilename.value.trim()
                         if (filename.isEmpty()) {
                             activity.toast(R.string.filename_cannot_be_empty)
                             return@setOnClickListener
+                        }
+
+                        if (!filename.endsWith(".json", ignoreCase = true)) {
+                            filename += ".json"
                         }
 
                         val newPath = "${folder.trimEnd('/')}/$filename"

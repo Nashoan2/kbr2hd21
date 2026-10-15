@@ -23,6 +23,7 @@
     <string name="text_pinned">Pinned</string>
     <string name="export_clipboard_items">Export clipboard items</string>
     <string name="import_clipboard_items">Import clipboard items</string>
+    <string name="filename_backup_hint">Backup filename (.json)</string>
     <!-- Accessibility -->
     <string name="keycode_delete">Delete</string>
     <string name="keycode_mode_change">Change keyboard type</string>
